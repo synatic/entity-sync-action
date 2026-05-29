@@ -1,0 +1,86 @@
+name: "Synatic Entity Sync"
+description: "Generate entity sync plans from a Synatic org and commit them to Git, or execute a committed plan against a destination org."
+author: "Synatic"
+
+inputs:
+  command:
+    description: "Action command: plan or execute"
+    required: true
+  api-url:
+    description: "Synatic API base URL (no trailing slash)"
+    required: true
+  api-key:
+    description: "Synatic org API key (syn_api_...). Store as a secret."
+    required: true
+  source-org:
+    description: "Source org name for plan command (URL segment)"
+  root-type:
+    description: "Root entity type for plan command (flow, solution, parameter, etc.)"
+  root-id:
+    description: "Root entity MongoDB ObjectId for plan command"
+  plan-path:
+    description: "Path to the plan JSON file in the repository"
+    required: false
+    default: ".synatic/plans/plan.json"
+  plan-options:
+    description: "JSON string of plan options passed to the API"
+    required: false
+    default: "{}"
+  auto-commit:
+    description: "For plan command: commit plan file to Git (default true)"
+    required: false
+    default: "true"
+  create-pr:
+    description: "For plan command with auto-commit: open a pull request (default true)"
+    required: false
+    default: "true"
+  pr-title:
+    description: "Pull request title when create-pr is true"
+    required: false
+  pr-body:
+    description: "Pull request body when create-pr is true"
+    required: false
+  pr-base-branch:
+    description: "Base branch for pull request or commit"
+    required: false
+    default: "main"
+  commit-message:
+    description: "Commit message when auto-commit is true"
+    required: false
+    default: "chore: update entity sync plan"
+  dest-org:
+    description: "Destination org name for execute command (URL segment)"
+  preview-first:
+    description: "For execute command: run preview before execute (default true)"
+    required: false
+    default: "true"
+  preview-only:
+    description: "For execute command: stop after preview without executing"
+    required: false
+    default: "false"
+  fail-on-conflict:
+    description: "For execute command: fail when preview reports conflicts (default true)"
+    required: false
+    default: "true"
+
+outputs:
+  plan-id:
+    description: "Plan UUID from generated or executed plan"
+  plan-path:
+    description: "Path to the plan file written or read"
+  branch-name:
+    description: "Branch name created when auto-commit is enabled"
+  run-id:
+    description: "Execute run id when execute command completes"
+  summary:
+    description: "JSON string of preview or execute summary"
+  conflicts:
+    description: "Conflict count from preview"
+
+runs:
+  using: "node24"
+  main: "dist/index.js"
+
+branding:
+  icon: "git-merge"
+  color: "blue"
