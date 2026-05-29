@@ -25,11 +25,18 @@ export async function runPlanCommand(inputs) {
     `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrg}`
   );
 
-  const plan = await client.plan(inputs.sourceOrg, {
+  const requestBody = {
     rootType: inputs.rootType,
     rootId: inputs.rootId,
     options: inputs.planOptions || {},
-  });
+  };
+
+  core.info(
+    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrg}/entity-sync/plan`
+  );
+  core.info(`Request body: ${JSON.stringify(requestBody)}`);
+
+  const plan = await client.plan(inputs.sourceOrg, requestBody);
 
   const { planAbsolutePath, manifestAbsolutePath } = writePlanFiles(
     plan,

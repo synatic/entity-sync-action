@@ -39,7 +39,7 @@ jobs:
 
       - name: Generate entity sync plan
         id: sync-plan
-        uses: synatic/entity-sync-action@v1
+        uses: synatic-sync/entity-sync-action@v1
         with:
           command: plan
           api-url: ${{ secrets.SYNATIC_API_URL }}
@@ -56,25 +56,25 @@ By default the action commits the plan to a new branch and opens a pull request.
 ### Generate a plan (write-only, manual commit)
 
 ```yaml
-      - name: Generate plan file
-        uses: synatic/entity-sync-action@v1
-        with:
-          command: plan
-          api-url: ${{ secrets.SYNATIC_API_URL }}
-          api-key: ${{ secrets.SYNATIC_API_KEY }}
-          source-org: acme-uat
-          root-type: flow
-          root-id: 507f1f77bcf86cd799439011
-          plan-path: .synatic/plans/flow-order-processing.json
-          auto-commit: "false"
+- name: Generate plan file
+  uses: synatic-sync/entity-sync-action@v1
+  with:
+    command: plan
+    api-url: ${{ secrets.SYNATIC_API_URL }}
+    api-key: ${{ secrets.SYNATIC_API_KEY }}
+    source-org: acme-uat
+    root-type: flow
+    root-id: 507f1f77bcf86cd799439011
+    plan-path: .synatic/plans/flow-order-processing.json
+    auto-commit: "false"
 
-      - name: Commit plan
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .synatic/plans/
-          git diff --staged --quiet || git commit -m "chore: update entity sync plan"
-          git push
+- name: Commit plan
+  run: |
+    git config user.name "github-actions[bot]"
+    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    git add .synatic/plans/
+    git diff --staged --quiet || git commit -m "chore: update entity sync plan"
+    git push
 ```
 
 ### Execute a committed plan
@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Preview and execute plan
-        uses: synatic/entity-sync-action@v1
+        uses: synatic-sync/entity-sync-action@v1
         with:
           command: execute
           api-url: ${{ secrets.SYNATIC_API_URL }}
@@ -105,26 +105,26 @@ jobs:
 
 ## Inputs
 
-| Input | Required | Default | Description |
-| --- | --- | --- | --- |
-| `command` | yes | — | `plan` or `execute` |
-| `api-url` | yes | — | Synatic API base URL |
-| `api-key` | yes | — | Org API key (`syn_api_...`) |
-| `source-org` | plan | — | Source org name for `/plan` |
-| `root-type` | plan | — | Root entity type |
-| `root-id` | plan | — | Root entity ObjectId |
-| `plan-path` | no | `.synatic/plans/plan.json` | Plan file path in repo |
-| `plan-options` | no | `{}` | JSON plan options |
-| `auto-commit` | no | `true` | Commit plan to Git (plan command) |
-| `create-pr` | no | `true` | Open PR when auto-commit is enabled |
-| `pr-title` | no | auto | PR title |
-| `pr-body` | no | auto | PR body |
-| `pr-base-branch` | no | `main` | Base branch for PR/commit |
-| `commit-message` | no | `chore: update entity sync plan` | Commit message |
-| `dest-org` | execute | — | Destination org name |
-| `preview-first` | no | `true` | Preview before execute |
-| `preview-only` | no | `false` | Stop after preview |
-| `fail-on-conflict` | no | `true` | Fail when preview reports conflicts |
+| Input              | Required | Default                          | Description                         |
+| ------------------ | -------- | -------------------------------- | ----------------------------------- |
+| `command`          | yes      | —                                | `plan` or `execute`                 |
+| `api-url`          | yes      | —                                | Synatic API base URL                |
+| `api-key`          | yes      | —                                | Org API key (`syn_api_...`)         |
+| `source-org`       | plan     | —                                | Source org name for `/plan`         |
+| `root-type`        | plan     | —                                | Root entity type                    |
+| `root-id`          | plan     | —                                | Root entity ObjectId                |
+| `plan-path`        | no       | `.synatic/plans/plan.json`       | Plan file path in repo              |
+| `plan-options`     | no       | `{}`                             | JSON plan options                   |
+| `auto-commit`      | no       | `true`                           | Commit plan to Git (plan command)   |
+| `create-pr`        | no       | `true`                           | Open PR when auto-commit is enabled |
+| `pr-title`         | no       | auto                             | PR title                            |
+| `pr-body`          | no       | auto                             | PR body                             |
+| `pr-base-branch`   | no       | `main`                           | Base branch for PR/commit           |
+| `commit-message`   | no       | `chore: update entity sync plan` | Commit message                      |
+| `dest-org`         | execute  | —                                | Destination org name                |
+| `preview-first`    | no       | `true`                           | Preview before execute              |
+| `preview-only`     | no       | `false`                          | Stop after preview                  |
+| `fail-on-conflict` | no       | `true`                           | Fail when preview reports conflicts |
 
 ### Root types
 
@@ -132,14 +132,14 @@ jobs:
 
 ## Outputs
 
-| Output | Description |
-| --- | --- |
-| `plan-id` | Plan UUID |
-| `plan-path` | Path to plan file |
-| `branch-name` | Branch created (plan + auto-commit) |
-| `run-id` | Execute run ID |
-| `summary` | Preview or execute summary (JSON string) |
-| `conflicts` | Conflict count from preview |
+| Output        | Description                              |
+| ------------- | ---------------------------------------- |
+| `plan-id`     | Plan UUID                                |
+| `plan-path`   | Path to plan file                        |
+| `branch-name` | Branch created (plan + auto-commit)      |
+| `run-id`      | Execute run ID                           |
+| `summary`     | Preview or execute summary (JSON string) |
+| `conflicts`   | Conflict count from preview              |
 
 ## API essentials
 
@@ -149,12 +149,12 @@ All endpoints live under:
 {api-url}/v1/organizations/{orgName}/entity-sync/...
 ```
 
-| Command | Endpoint | Org in URL |
-| --- | --- | --- |
-| plan | `POST /plan` | Source org |
-| execute (preview) | `POST /preview` | Destination org |
-| execute | `POST /execute` | Destination org |
-| audit | `GET /runs/{runId}` | Destination org |
+| Command           | Endpoint            | Org in URL      |
+| ----------------- | ------------------- | --------------- |
+| plan              | `POST /plan`        | Source org      |
+| execute (preview) | `POST /preview`     | Destination org |
+| execute           | `POST /execute`     | Destination org |
+| audit             | `GET /runs/{runId}` | Destination org |
 
 Authentication:
 

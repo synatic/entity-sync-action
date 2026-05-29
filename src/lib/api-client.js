@@ -1,4 +1,5 @@
 import { RetryClient } from "./retry.js";
+import { throwForApiResponse } from "./api-errors.js";
 
 /**
  * @typedef {Object} ApiClientConfig
@@ -33,37 +34,22 @@ export class EntitySyncApiClient {
   }
 
   /**
-   * @param {import('got').Response} response
-   * @param {string} action
-   * @returns {Promise<never>}
-   */
-  async throwForResponse(response, action) {
-    const body = response.body;
-    const message =
-      body && typeof body === "object" && "message" in body
-        ? String(body.message)
-        : `Request failed with status ${response.statusCode}`;
-    const code =
-      body && typeof body === "object" && "code" in body
-        ? String(body.code)
-        : undefined;
-
-    const detail = code ? `${message} (code: ${code})` : message;
-    throw new Error(`${action} failed (${response.statusCode}): ${detail}`);
-  }
-
-  /**
    * @param {string} sourceOrg
    * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
   async plan(sourceOrg, body) {
-    const response = await this.client.post(`${this.entitySyncBase(sourceOrg)}/plan`, {
+    const url = `${this.entitySyncBase(sourceOrg)}/plan`;
+    const response = await this.client.post(url, {
       json: body,
     });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Plan");
+      throwForApiResponse(response, "Plan", {
+        method: "POST",
+        url,
+        requestBody: body,
+      });
     }
 
     return /** @type {import('../types.js').SyncPlan} */ (response.body);
@@ -75,15 +61,20 @@ export class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async preview(destOrg, plan) {
-    const response = await this.client.post(
-      `${this.entitySyncBase(destOrg)}/preview`,
-      {
-        json: { plan },
-      }
-    );
+    const url = `${this.entitySyncBase(destOrg)}/preview`;
+    const response = await this.client.post(url, {
+      json: { plan },
+    });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Preview");
+      throwForApiResponse(response, "Preview", {
+        method: "POST",
+        url,
+        requestBody: {
+          planId: plan.planId,
+          stepCount: plan.steps.length,
+        },
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);
@@ -95,15 +86,20 @@ export class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async execute(destOrg, plan) {
-    const response = await this.client.post(
-      `${this.entitySyncBase(destOrg)}/execute`,
-      {
-        json: { plan },
-      }
-    );
+    const url = `${this.entitySyncBase(destOrg)}/execute`;
+    const response = await this.client.post(url, {
+      json: { plan },
+    });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Execute");
+      throwForApiResponse(response, "Execute", {
+        method: "POST",
+        url,
+        requestBody: {
+          planId: plan.planId,
+          stepCount: plan.steps.length,
+        },
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);
@@ -115,12 +111,14 @@ export class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async getRun(destOrg, runId) {
-    const response = await this.client.get(
-      `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`
-    );
+    const url = `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`;
+    const response = await this.client.get(url);
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Get run");
+      throwForApiResponse(response, "Get run", {
+        method: "GET",
+        url,
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);

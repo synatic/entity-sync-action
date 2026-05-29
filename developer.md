@@ -1,6 +1,6 @@
 # Developer guide — Entity Sync Action
 
-This document is for maintainers of the public `synatic/entity-sync-action` repository.
+This document is for maintainers of the public `synatic-sync/entity-sync-action` repository.
 
 ## Architecture
 
@@ -60,7 +60,7 @@ runs:
   main: dist/index.js
 ```
 
-When a customer runs `uses: synatic/entity-sync-action@v1`, GitHub checks out the action repo at that tag and executes `dist/index.js`. It does **not** run `npm install` in the action repository.
+When a customer runs `uses: synatic-sync/entity-sync-action@v1`, GitHub checks out the action repo at that tag and executes `dist/index.js`. It does **not** run `npm install` in the action repository.
 
 Dependencies (`@actions/core`, `got`, `octokit`, etc.) must therefore be bundled into `dist/` at build time:
 
@@ -83,7 +83,7 @@ This repository is **public on GitHub** but is **not published to the npm regist
 Customers pin the action with a **Git tag**:
 
 ```yaml
-uses: synatic/entity-sync-action@v1.0.3   # resolves to a git ref
+uses: synatic-sync/entity-sync-action@v1.0.3   # resolves to a git ref
 ```
 
 Use **`npm version`** to bump `package.json`, create the matching git tag, and keep version metadata in sync. That tag is what GitHub Actions consumers reference.
@@ -138,7 +138,7 @@ Use `npm version major` when making incompatible changes (e.g. Node runtime bump
 4. **Verify consumption** — test in a separate repo:
 
    ```yaml
-   uses: synatic/entity-sync-action@v1.0.1
+   uses: synatic-sync/entity-sync-action@v1.0.1
    ```
 
 5. **Optional: GitHub Marketplace**

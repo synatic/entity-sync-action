@@ -46144,7 +46144,126 @@ class RetryClient {
   }
 }
 
+;// CONCATENATED MODULE: ./src/lib/api-errors.js
+/**
+ * @param {unknown} body
+ * @returns {Record<string, unknown> | null}
+ */
+function asErrorBody(body) {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    return /** @type {Record<string, unknown>} */ (body);
+  }
+  return null;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string | undefined}
+ */
+function stringifyDetail(value) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * @typedef {Object} ApiErrorContext
+ * @property {string} [url]
+ * @property {string} [method]
+ * @property {Record<string, unknown>} [requestBody]
+ */
+
+/**
+ * @param {import('got').Response} response
+ * @param {string} action
+ * @param {ApiErrorContext} [context]
+ * @returns {string}
+ */
+function formatApiError(response, action, context = {}) {
+  const body = asErrorBody(response.body);
+  const lines = [`${action} failed (HTTP ${response.statusCode})`];
+
+  if (context.method && context.url) {
+    lines.push(`${context.method} ${context.url}`);
+  } else if (context.url) {
+    lines.push(`URL: ${context.url}`);
+  }
+
+  if (context.requestBody) {
+    lines.push(`Request body: ${JSON.stringify(context.requestBody)}`);
+  }
+
+  if (body?.url) {
+    lines.push(`API path: ${String(body.url)}`);
+  }
+
+  if (body?.method) {
+    lines.push(`API method: ${String(body.method)}`);
+  }
+
+  if (body?.message) {
+    lines.push(`Message: ${String(body.message)}`);
+  }
+
+  if (body?.code) {
+    lines.push(`Code: ${String(body.code)}`);
+  }
+
+  const errorDetail = stringifyDetail(body?.error);
+  if (errorDetail && errorDetail !== "{}") {
+    lines.push(`Details: ${errorDetail}`);
+  }
+
+  if (!body?.message && typeof response.body === "string" && response.body) {
+    lines.push(`Response: ${response.body}`);
+  }
+
+  if (!body?.message && response.body && typeof response.body !== "string") {
+    const raw = stringifyDetail(response.body);
+    if (raw) {
+      lines.push(`Response body: ${raw}`);
+    }
+  }
+
+  if (response.statusCode >= 500) {
+    lines.push(
+      "This is a server-side error from the Synatic API. Verify the org, root entity, and API URL are correct. If they are, share the details above with Synatic support."
+    );
+  } else if (response.statusCode === 401 || response.statusCode === 403) {
+    lines.push(
+      "Check that the API key is valid for the org in the URL and has access to entity-sync."
+    );
+  } else if (response.statusCode === 404) {
+    lines.push(
+      "The org or root entity may not exist, or the API key may not have access to this org."
+    );
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * @param {import('got').Response} response
+ * @param {string} action
+ * @param {ApiErrorContext} [context]
+ * @returns {never}
+ */
+function throwForApiResponse(response, action, context = {}) {
+  throw new Error(formatApiError(response, action, context));
+}
+
 ;// CONCATENATED MODULE: ./src/lib/api-client.js
+
 
 
 /**
@@ -46180,37 +46299,22 @@ class EntitySyncApiClient {
   }
 
   /**
-   * @param {import('got').Response} response
-   * @param {string} action
-   * @returns {Promise<never>}
-   */
-  async throwForResponse(response, action) {
-    const body = response.body;
-    const message =
-      body && typeof body === "object" && "message" in body
-        ? String(body.message)
-        : `Request failed with status ${response.statusCode}`;
-    const code =
-      body && typeof body === "object" && "code" in body
-        ? String(body.code)
-        : undefined;
-
-    const detail = code ? `${message} (code: ${code})` : message;
-    throw new Error(`${action} failed (${response.statusCode}): ${detail}`);
-  }
-
-  /**
    * @param {string} sourceOrg
    * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
   async plan(sourceOrg, body) {
-    const response = await this.client.post(`${this.entitySyncBase(sourceOrg)}/plan`, {
+    const url = `${this.entitySyncBase(sourceOrg)}/plan`;
+    const response = await this.client.post(url, {
       json: body,
     });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Plan");
+      throwForApiResponse(response, "Plan", {
+        method: "POST",
+        url,
+        requestBody: body,
+      });
     }
 
     return /** @type {import('../types.js').SyncPlan} */ (response.body);
@@ -46222,15 +46326,20 @@ class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async preview(destOrg, plan) {
-    const response = await this.client.post(
-      `${this.entitySyncBase(destOrg)}/preview`,
-      {
-        json: { plan },
-      }
-    );
+    const url = `${this.entitySyncBase(destOrg)}/preview`;
+    const response = await this.client.post(url, {
+      json: { plan },
+    });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Preview");
+      throwForApiResponse(response, "Preview", {
+        method: "POST",
+        url,
+        requestBody: {
+          planId: plan.planId,
+          stepCount: plan.steps.length,
+        },
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);
@@ -46242,15 +46351,20 @@ class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async execute(destOrg, plan) {
-    const response = await this.client.post(
-      `${this.entitySyncBase(destOrg)}/execute`,
-      {
-        json: { plan },
-      }
-    );
+    const url = `${this.entitySyncBase(destOrg)}/execute`;
+    const response = await this.client.post(url, {
+      json: { plan },
+    });
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Execute");
+      throwForApiResponse(response, "Execute", {
+        method: "POST",
+        url,
+        requestBody: {
+          planId: plan.planId,
+          stepCount: plan.steps.length,
+        },
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);
@@ -46262,12 +46376,14 @@ class EntitySyncApiClient {
    * @returns {Promise<Record<string, unknown>>}
    */
   async getRun(destOrg, runId) {
-    const response = await this.client.get(
-      `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`
-    );
+    const url = `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`;
+    const response = await this.client.get(url);
 
     if (response.statusCode !== 200) {
-      await this.throwForResponse(response, "Get run");
+      throwForApiResponse(response, "Get run", {
+        method: "GET",
+        url,
+      });
     }
 
     return /** @type {Record<string, unknown>} */ (response.body);
@@ -60867,11 +60983,18 @@ async function runPlanCommand(inputs) {
     `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrg}`
   );
 
-  const plan = await client.plan(inputs.sourceOrg, {
+  const requestBody = {
     rootType: inputs.rootType,
     rootId: inputs.rootId,
     options: inputs.planOptions || {},
-  });
+  };
+
+  core.info(
+    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrg}/entity-sync/plan`
+  );
+  core.info(`Request body: ${JSON.stringify(requestBody)}`);
+
+  const plan = await client.plan(inputs.sourceOrg, requestBody);
 
   const { planAbsolutePath, manifestAbsolutePath } = writePlanFiles(
     plan,

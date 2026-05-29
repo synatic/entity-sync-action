@@ -81,7 +81,7 @@ describe("EntitySyncApiClient", () => {
         planId: "",
         steps: [],
       })
-    ).rejects.toThrow(/Preview failed \(400\): plan.planId is required/);
+    ).rejects.toThrow(/Preview failed \(HTTP 400\)/);
   });
 
   it("fetches run audit details", async () => {
