@@ -26,6 +26,10 @@ inputs:
     description: "JSON string of plan options passed to the API"
     required: false
     default: "{}"
+  github-token:
+    description: "GitHub token for auto-commit and pull requests (defaults to the workflow token)"
+    required: false
+    default: ${{ github.token }}
   auto-commit:
     description: "For plan command: commit plan file to Git (default true)"
     required: false

@@ -52,9 +52,11 @@ export async function runPlanCommand(inputs) {
     return;
   }
 
-  const token = process.env.GITHUB_TOKEN;
+  const token = core.getInput("github-token") || process.env.GITHUB_TOKEN;
   if (!token) {
-    throw new Error("GITHUB_TOKEN is required when auto-commit is enabled");
+    throw new Error(
+      "A GitHub token is required when auto-commit is enabled (set the github-token input or GITHUB_TOKEN env)"
+    );
   }
 
   const { owner, repo } = github.context.repo;

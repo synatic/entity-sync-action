@@ -51,7 +51,7 @@ jobs:
           plan-options: '{"includeReverseDeps": true}'
 ```
 
-By default the action commits the plan to a new branch and opens a pull request.
+By default the action commits the plan to a new branch and opens a pull request. The workflow needs `contents: write` and `pull-requests: write` permissions (see above). The action uses the workflow token via the `github-token` input (default). On action versions before `github-token` was added, pass `env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` on the step if auto-commit fails with a missing token error.
 
 ### Generate a plan (write-only, manual commit)
 
