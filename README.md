@@ -44,7 +44,7 @@ jobs:
           command: plan
           api-url: ${{ secrets.SYNATIC_API_URL }}
           api-key: ${{ secrets.SYNATIC_API_KEY }}
-          source-org: acme-uat
+          source-org-id: 60ff27eab96f22106d98f1f2
           root-type: flow
           root-id: 507f1f77bcf86cd799439011
           plan-path: .synatic/plans/flow-order-processing.json
@@ -62,7 +62,7 @@ By default the action commits the plan to a new branch and opens a pull request.
     command: plan
     api-url: ${{ secrets.SYNATIC_API_URL }}
     api-key: ${{ secrets.SYNATIC_API_KEY }}
-    source-org: acme-uat
+    source-org-id: 60ff27eab96f22106d98f1f2
     root-type: flow
     root-id: 507f1f77bcf86cd799439011
     plan-path: .synatic/plans/flow-order-processing.json
@@ -97,7 +97,7 @@ jobs:
           command: execute
           api-url: ${{ secrets.SYNATIC_API_URL }}
           api-key: ${{ secrets.SYNATIC_API_KEY }}
-          dest-org: acme-prod
+          dest-org-id: 507f1f77bcf86cd799439012
           plan-path: .synatic/plans/flow-order-processing.json
           preview-first: "true"
           fail-on-conflict: "true"
@@ -110,7 +110,7 @@ jobs:
 | `command`          | yes      | —                                | `plan` or `execute`                 |
 | `api-url`          | yes      | —                                | Synatic API base URL                |
 | `api-key`          | yes      | —                                | Org API key (`syn_api_...`)         |
-| `source-org`       | plan     | —                                | Source org name for `/plan`         |
+| `source-org-id`    | plan     | —                                | Source org MongoDB ObjectId         |
 | `root-type`        | plan     | —                                | Root entity type                    |
 | `root-id`          | plan     | —                                | Root entity ObjectId                |
 | `plan-path`        | no       | `.synatic/plans/plan.json`       | Plan file path in repo              |
@@ -121,7 +121,7 @@ jobs:
 | `pr-body`          | no       | auto                             | PR body                             |
 | `pr-base-branch`   | no       | `main`                           | Base branch for PR/commit           |
 | `commit-message`   | no       | `chore: update entity sync plan` | Commit message                      |
-| `dest-org`         | execute  | —                                | Destination org name                |
+| `dest-org-id`      | execute  | —                                | Destination org MongoDB ObjectId    |
 | `preview-first`    | no       | `true`                           | Preview before execute              |
 | `preview-only`     | no       | `false`                          | Stop after preview                  |
 | `fail-on-conflict` | no       | `true`                           | Fail when preview reports conflicts |
@@ -146,15 +146,15 @@ jobs:
 All endpoints live under:
 
 ```text
-{api-url}/v1/organizations/{orgName}/entity-sync/...
+{api-url}/v1/organizations/{orgId}/entity-sync/...
 ```
 
-| Command           | Endpoint            | Org in URL      |
-| ----------------- | ------------------- | --------------- |
-| plan              | `POST /plan`        | Source org      |
-| execute (preview) | `POST /preview`     | Destination org |
-| execute           | `POST /execute`     | Destination org |
-| audit             | `GET /runs/{runId}` | Destination org |
+| Command           | Endpoint            | Org in URL           |
+| ----------------- | ------------------- | -------------------- |
+| plan              | `POST /plan`        | Source org ID        |
+| execute (preview) | `POST /preview`     | Destination org ID   |
+| execute           | `POST /execute`     | Destination org ID   |
+| audit             | `GET /runs/{runId}` | Destination org ID   |
 
 Authentication:
 

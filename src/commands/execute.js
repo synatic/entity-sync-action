@@ -101,7 +101,7 @@ export async function runExecuteCommand(inputs) {
 
   if (inputs.previewFirst) {
     core.startGroup("Preview");
-    previewResult = await client.preview(inputs.destOrg, plan);
+    previewResult = await client.preview(inputs.destOrgId, plan);
     logPreviewSummary(previewResult);
 
     const conflicts = getConflictCount(
@@ -124,7 +124,7 @@ export async function runExecuteCommand(inputs) {
   }
 
   core.startGroup("Execute");
-  const executeResult = await client.execute(inputs.destOrg, plan);
+  const executeResult = await client.execute(inputs.destOrgId, plan);
   const runId = String(executeResult.runId || "");
   const executeSummary = executeResult.summary;
 
@@ -135,7 +135,7 @@ export async function runExecuteCommand(inputs) {
 
   if (runId) {
     core.startGroup("Run audit");
-    const run = await client.getRun(inputs.destOrg, runId);
+    const run = await client.getRun(inputs.destOrgId, runId);
     logRunAudit(run);
     core.endGroup();
 

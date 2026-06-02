@@ -26,20 +26,20 @@ export class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} orgName
+   * @param {string} orgId
    * @returns {string}
    */
-  entitySyncBase(orgName) {
-    return `${this.apiUrl}/v1/organizations/${encodeURIComponent(orgName)}/entity-sync`;
+  entitySyncBase(orgId) {
+    return `${this.apiUrl}/v1/organizations/${encodeURIComponent(orgId)}/entity-sync`;
   }
 
   /**
-   * @param {string} sourceOrg
+   * @param {string} sourceOrgId
    * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
-  async plan(sourceOrg, body) {
-    const url = `${this.entitySyncBase(sourceOrg)}/plan`;
+  async plan(sourceOrgId, body) {
+    const url = `${this.entitySyncBase(sourceOrgId)}/plan`;
     const response = await this.client.post(url, {
       json: body,
     });
@@ -56,12 +56,12 @@ export class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {import('../types.js').SyncPlan} plan
    * @returns {Promise<Record<string, unknown>>}
    */
-  async preview(destOrg, plan) {
-    const url = `${this.entitySyncBase(destOrg)}/preview`;
+  async preview(destOrgId, plan) {
+    const url = `${this.entitySyncBase(destOrgId)}/preview`;
     const response = await this.client.post(url, {
       json: { plan },
     });
@@ -81,12 +81,12 @@ export class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {import('../types.js').SyncPlan} plan
    * @returns {Promise<Record<string, unknown>>}
    */
-  async execute(destOrg, plan) {
-    const url = `${this.entitySyncBase(destOrg)}/execute`;
+  async execute(destOrgId, plan) {
+    const url = `${this.entitySyncBase(destOrgId)}/execute`;
     const response = await this.client.post(url, {
       json: { plan },
     });
@@ -106,12 +106,12 @@ export class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {string} runId
    * @returns {Promise<Record<string, unknown>>}
    */
-  async getRun(destOrg, runId) {
-    const url = `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`;
+  async getRun(destOrgId, runId) {
+    const url = `${this.entitySyncBase(destOrgId)}/runs/${encodeURIComponent(runId)}`;
     const response = await this.client.get(url);
 
     if (response.statusCode !== 200) {

@@ -46291,20 +46291,20 @@ class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} orgName
+   * @param {string} orgId
    * @returns {string}
    */
-  entitySyncBase(orgName) {
-    return `${this.apiUrl}/v1/organizations/${encodeURIComponent(orgName)}/entity-sync`;
+  entitySyncBase(orgId) {
+    return `${this.apiUrl}/v1/organizations/${encodeURIComponent(orgId)}/entity-sync`;
   }
 
   /**
-   * @param {string} sourceOrg
+   * @param {string} sourceOrgId
    * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
-  async plan(sourceOrg, body) {
-    const url = `${this.entitySyncBase(sourceOrg)}/plan`;
+  async plan(sourceOrgId, body) {
+    const url = `${this.entitySyncBase(sourceOrgId)}/plan`;
     const response = await this.client.post(url, {
       json: body,
     });
@@ -46321,12 +46321,12 @@ class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {import('../types.js').SyncPlan} plan
    * @returns {Promise<Record<string, unknown>>}
    */
-  async preview(destOrg, plan) {
-    const url = `${this.entitySyncBase(destOrg)}/preview`;
+  async preview(destOrgId, plan) {
+    const url = `${this.entitySyncBase(destOrgId)}/preview`;
     const response = await this.client.post(url, {
       json: { plan },
     });
@@ -46346,12 +46346,12 @@ class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {import('../types.js').SyncPlan} plan
    * @returns {Promise<Record<string, unknown>>}
    */
-  async execute(destOrg, plan) {
-    const url = `${this.entitySyncBase(destOrg)}/execute`;
+  async execute(destOrgId, plan) {
+    const url = `${this.entitySyncBase(destOrgId)}/execute`;
     const response = await this.client.post(url, {
       json: { plan },
     });
@@ -46371,12 +46371,12 @@ class EntitySyncApiClient {
   }
 
   /**
-   * @param {string} destOrg
+   * @param {string} destOrgId
    * @param {string} runId
    * @returns {Promise<Record<string, unknown>>}
    */
-  async getRun(destOrg, runId) {
-    const url = `${this.entitySyncBase(destOrg)}/runs/${encodeURIComponent(runId)}`;
+  async getRun(destOrgId, runId) {
+    const url = `${this.entitySyncBase(destOrgId)}/runs/${encodeURIComponent(runId)}`;
     const response = await this.client.get(url);
 
     if (response.statusCode !== 200) {
@@ -46606,7 +46606,7 @@ async function runExecuteCommand(inputs) {
 
   if (inputs.previewFirst) {
     core.startGroup("Preview");
-    previewResult = await client.preview(inputs.destOrg, plan);
+    previewResult = await client.preview(inputs.destOrgId, plan);
     logPreviewSummary(previewResult);
 
     const conflicts = getConflictCount(
@@ -46629,7 +46629,7 @@ async function runExecuteCommand(inputs) {
   }
 
   core.startGroup("Execute");
-  const executeResult = await client.execute(inputs.destOrg, plan);
+  const executeResult = await client.execute(inputs.destOrgId, plan);
   const runId = String(executeResult.runId || "");
   const executeSummary = executeResult.summary;
 
@@ -46640,7 +46640,7 @@ async function runExecuteCommand(inputs) {
 
   if (runId) {
     core.startGroup("Run audit");
-    const run = await client.getRun(inputs.destOrg, runId);
+    const run = await client.getRun(inputs.destOrgId, runId);
     logRunAudit(run);
     core.endGroup();
 
@@ -60980,7 +60980,7 @@ async function runPlanCommand(inputs) {
   });
 
   core.info(
-    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrg}`
+    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
   );
 
   const requestBody = {
@@ -60990,11 +60990,11 @@ async function runPlanCommand(inputs) {
   };
 
   core.info(
-    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrg}/entity-sync/plan`
+    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrgId}/entity-sync/plan`
   );
   core.info(`Request body: ${JSON.stringify(requestBody)}`);
 
-  const plan = await client.plan(inputs.sourceOrg, requestBody);
+  const plan = await client.plan(inputs.sourceOrgId, requestBody);
 
   const { planAbsolutePath, manifestAbsolutePath } = writePlanFiles(
     plan,
@@ -61010,9 +61010,11 @@ async function runPlanCommand(inputs) {
     return;
   }
 
-  const token = process.env.GITHUB_TOKEN;
+  const token = core.getInput("github-token") || process.env.GITHUB_TOKEN;
   if (!token) {
-    throw new Error("GITHUB_TOKEN is required when auto-commit is enabled");
+    throw new Error(
+      "A GitHub token is required when auto-commit is enabled (set the github-token input or GITHUB_TOKEN env)"
+    );
   }
 
   const { owner, repo } = github.context.repo;
@@ -61028,7 +61030,7 @@ async function runPlanCommand(inputs) {
       "Automated entity sync plan update.",
       "",
       `- Plan ID: ${plan.planId}`,
-      `- Source org: ${inputs.sourceOrg}`,
+      `- Source org ID: ${inputs.sourceOrgId}`,
       `- Root: ${inputs.rootType} ${inputs.rootId}`,
       `- Generated: ${plan.generatedAt}`,
     ].join("\n");
@@ -61138,7 +61140,7 @@ function parseInputs(command) {
   };
 
   if (normalizedCommand === "plan") {
-    inputs.sourceOrg = getInput("source-org", { required: true });
+    inputs.sourceOrgId = getInput("source-org-id", { required: true });
     inputs.rootType = getInput("root-type", { required: true });
     inputs.rootId = getInput("root-id", { required: true });
 
@@ -61159,7 +61161,7 @@ function parseInputs(command) {
   }
 
   if (normalizedCommand === "execute") {
-    inputs.destOrg = getInput("dest-org", { required: true });
+    inputs.destOrgId = getInput("dest-org-id", { required: true });
     inputs.previewFirst = isTruthyDefaultTrue("preview-first");
     inputs.previewOnly = getBooleanInput("preview-only", false);
     inputs.failOnConflict = isTruthyDefaultTrue("fail-on-conflict");

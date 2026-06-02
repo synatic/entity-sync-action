@@ -12,8 +12,8 @@ inputs:
   api-key:
     description: "Synatic org API key (syn_api_...). Store as a secret."
     required: true
-  source-org:
-    description: "Source org name for plan command (URL segment)"
+  source-org-id:
+    description: "Source organization MongoDB ObjectId for plan command (URL segment)"
   root-type:
     description: "Root entity type for plan command (flow, solution, parameter, etc.)"
   root-id:
@@ -52,8 +52,8 @@ inputs:
     description: "Commit message when auto-commit is true"
     required: false
     default: "chore: update entity sync plan"
-  dest-org:
-    description: "Destination org name for execute command (URL segment)"
+  dest-org-id:
+    description: "Destination organization MongoDB ObjectId for execute command (URL segment)"
   preview-first:
     description: "For execute command: run preview before execute (default true)"
     required: false

@@ -73,7 +73,7 @@ export function parseInputs(command) {
   };
 
   if (normalizedCommand === "plan") {
-    inputs.sourceOrg = getInput("source-org", { required: true });
+    inputs.sourceOrgId = getInput("source-org-id", { required: true });
     inputs.rootType = getInput("root-type", { required: true });
     inputs.rootId = getInput("root-id", { required: true });
 
@@ -94,7 +94,7 @@ export function parseInputs(command) {
   }
 
   if (normalizedCommand === "execute") {
-    inputs.destOrg = getInput("dest-org", { required: true });
+    inputs.destOrgId = getInput("dest-org-id", { required: true });
     inputs.previewFirst = isTruthyDefaultTrue("preview-first");
     inputs.previewOnly = getBooleanInput("preview-only", false);
     inputs.failOnConflict = isTruthyDefaultTrue("fail-on-conflict");

@@ -4,7 +4,7 @@
  * @property {string} apiUrl
  * @property {string} apiKey
  * @property {string} planPath
- * @property {string} [sourceOrg]
+ * @property {string} [sourceOrgId]
  * @property {string} [rootType]
  * @property {string} [rootId]
  * @property {Record<string, unknown>} [planOptions]
@@ -14,7 +14,7 @@
  * @property {string} [prBody]
  * @property {string} [prBaseBranch]
  * @property {string} [commitMessage]
- * @property {string} [destOrg]
+ * @property {string} [destOrgId]
  * @property {boolean} [previewFirst]
  * @property {boolean} [previewOnly]
  * @property {boolean} [failOnConflict]

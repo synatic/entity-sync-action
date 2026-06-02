@@ -38,7 +38,7 @@ describe("parseInputs", () => {
         command: "plan",
         "api-url": "https://api.example.com/",
         "api-key": "syn_api_test",
-        "source-org": "acme-uat",
+        "source-org-id": "60ff27eab96f22106d98f1f2",
         "root-type": "flow",
         "root-id": "507f1f77bcf86cd799439011",
         "plan-path": ".synatic/plans/flow.json",
@@ -54,7 +54,7 @@ describe("parseInputs", () => {
 
     expect(inputs.command).toBe("plan");
     expect(inputs.apiUrl).toBe("https://api.example.com");
-    expect(inputs.sourceOrg).toBe("acme-uat");
+    expect(inputs.sourceOrgId).toBe("60ff27eab96f22106d98f1f2");
     expect(inputs.planOptions).toEqual({ includeReverseDeps: true });
     expect(inputs.autoCommit).toBe(true);
     expect(inputs.createPr).toBe(false);
@@ -66,7 +66,7 @@ describe("parseInputs", () => {
         command: "execute",
         "api-url": "https://api.example.com",
         "api-key": "syn_api_test",
-        "dest-org": "acme-prod",
+        "dest-org-id": "507f1f77bcf86cd799439012",
         "plan-path": ".synatic/plans/flow.json",
       };
       return values[name] ?? "";
@@ -75,7 +75,7 @@ describe("parseInputs", () => {
     const inputs = parseInputs("execute");
 
     expect(inputs.command).toBe("execute");
-    expect(inputs.destOrg).toBe("acme-prod");
+    expect(inputs.destOrgId).toBe("507f1f77bcf86cd799439012");
     expect(inputs.previewFirst).toBe(true);
     expect(inputs.previewOnly).toBe(false);
     expect(inputs.failOnConflict).toBe(true);
@@ -90,7 +90,7 @@ describe("parseInputs", () => {
       const values = {
         "api-url": "https://api.example.com",
         "api-key": "syn_api_test",
-        "source-org": "acme-uat",
+        "source-org-id": "60ff27eab96f22106d98f1f2",
         "root-type": "invalid",
         "root-id": "507f1f77bcf86cd799439011",
       };

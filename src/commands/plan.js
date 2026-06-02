@@ -22,7 +22,7 @@ export async function runPlanCommand(inputs) {
   });
 
   core.info(
-    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrg}`
+    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
   );
 
   const requestBody = {
@@ -32,11 +32,11 @@ export async function runPlanCommand(inputs) {
   };
 
   core.info(
-    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrg}/entity-sync/plan`
+    `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrgId}/entity-sync/plan`
   );
   core.info(`Request body: ${JSON.stringify(requestBody)}`);
 
-  const plan = await client.plan(inputs.sourceOrg, requestBody);
+  const plan = await client.plan(inputs.sourceOrgId, requestBody);
 
   const { planAbsolutePath, manifestAbsolutePath } = writePlanFiles(
     plan,
@@ -72,7 +72,7 @@ export async function runPlanCommand(inputs) {
       "Automated entity sync plan update.",
       "",
       `- Plan ID: ${plan.planId}`,
-      `- Source org: ${inputs.sourceOrg}`,
+      `- Source org ID: ${inputs.sourceOrgId}`,
       `- Root: ${inputs.rootType} ${inputs.rootId}`,
       `- Generated: ${plan.generatedAt}`,
     ].join("\n");
