@@ -46300,7 +46300,7 @@ class EntitySyncApiClient {
 
   /**
    * @param {string} sourceOrgId
-   * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
+   * @param {{ roots?: import('../types.js').EntitySyncRoot[], rootType?: string, rootId?: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
   async plan(sourceOrgId, body) {
@@ -46434,10 +46434,16 @@ function writePlanFiles(plan, planPath) {
     planFile: planPath.replace(/\\/g, "/"),
     planId: plan.planId,
     sourceOrgId: plan.sourceOrgId,
-    rootType: plan.rootType,
-    rootId: plan.rootId,
     generatedAt: plan.generatedAt,
   };
+
+  if (plan.roots && plan.roots.length > 0) {
+    manifest.roots = plan.roots;
+  }
+  if (plan.rootType && plan.rootId) {
+    manifest.rootType = plan.rootType;
+    manifest.rootId = plan.rootId;
+  }
 
   external_node_fs_namespaceObject.mkdirSync(external_node_path_namespaceObject.dirname(manifestAbsolutePath), { recursive: true });
   external_node_fs_namespaceObject.writeFileSync(
@@ -60980,14 +60986,21 @@ async function runPlanCommand(inputs) {
   });
 
   core.info(
-    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
+    inputs.roots
+      ? `Generating plan for ${inputs.roots.length} roots in org ${inputs.sourceOrgId}`
+      : `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
   );
 
+  /** @type {{ roots?: import('../types.js').EntitySyncRoot[], rootType?: string, rootId?: string, options?: Record<string, unknown> }} */
   const requestBody = {
-    rootType: inputs.rootType,
-    rootId: inputs.rootId,
     options: inputs.planOptions || {},
   };
+  if (inputs.roots) {
+    requestBody.roots = inputs.roots;
+  } else {
+    requestBody.rootType = inputs.rootType;
+    requestBody.rootId = inputs.rootId;
+  }
 
   core.info(
     `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrgId}/entity-sync/plan`
@@ -61031,7 +61044,9 @@ async function runPlanCommand(inputs) {
       "",
       `- Plan ID: ${plan.planId}`,
       `- Source org ID: ${inputs.sourceOrgId}`,
-      `- Root: ${inputs.rootType} ${inputs.rootId}`,
+      inputs.roots
+        ? `- Roots: ${inputs.roots.map((r) => `${r.rootType} ${r.rootId}`).join(", ")}`
+        : `- Root: ${inputs.rootType} ${inputs.rootId}`,
       `- Generated: ${plan.generatedAt}`,
     ].join("\n");
 
@@ -61106,6 +61121,48 @@ function getBooleanInput(name, defaultValue = false) {
 }
 
 /**
+ * @param {string} raw
+ * @returns {import('../types.js').EntitySyncRoot[]}
+ */
+function parseRoots(raw) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Invalid roots JSON: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("roots must be a non-empty JSON array");
+  }
+
+  const seen = new Set();
+  return parsed.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`roots[${index}] must be an object`);
+    }
+    const rootType = typeof entry.rootType === "string" ? entry.rootType.trim() : "";
+    const rootId = typeof entry.rootId === "string" ? entry.rootId.trim() : "";
+    if (!ROOT_TYPES.has(rootType)) {
+      throw new Error(
+        `Invalid rootType '${entry.rootType}' in roots[${index}]. Must be one of: ${[...ROOT_TYPES].join(", ")}`
+      );
+    }
+    if (!rootId) {
+      throw new Error(`roots[${index}].rootId is required`);
+    }
+    const key = `${rootType}:${rootId}`;
+    if (seen.has(key)) {
+      throw new Error(`duplicate root in roots: ${key}`);
+    }
+    seen.add(key);
+    return { rootType, rootId };
+  });
+}
+
+/**
  * @returns {boolean}
  */
 function isTruthyDefaultTrue(name) {
@@ -61141,13 +61198,26 @@ function parseInputs(command) {
 
   if (normalizedCommand === "plan") {
     inputs.sourceOrgId = getInput("source-org-id", { required: true });
-    inputs.rootType = getInput("root-type", { required: true });
-    inputs.rootId = getInput("root-id", { required: true });
+    const rootsRaw = getInput("roots");
+    const rootTypeRaw = getInput("root-type");
+    const rootIdRaw = getInput("root-id");
 
-    if (!ROOT_TYPES.has(inputs.rootType)) {
-      throw new Error(
-        `Invalid root-type '${inputs.rootType}'. Must be one of: ${[...ROOT_TYPES].join(", ")}`
-      );
+    if (rootsRaw) {
+      if (rootTypeRaw || rootIdRaw) {
+        throw new Error(
+          "Provide either 'roots' or 'root-type' + 'root-id', not both"
+        );
+      }
+      inputs.roots = parseRoots(rootsRaw);
+    } else {
+      inputs.rootType = getInput("root-type", { required: true });
+      inputs.rootId = getInput("root-id", { required: true });
+
+      if (!ROOT_TYPES.has(inputs.rootType)) {
+        throw new Error(
+          `Invalid root-type '${inputs.rootType}'. Must be one of: ${[...ROOT_TYPES].join(", ")}`
+        );
+      }
     }
 
     inputs.planOptions = parsePlanOptions(getInput("plan-options") || "{}");

@@ -64,6 +64,42 @@ describe("EntitySyncApiClient", () => {
     expect(post).toHaveBeenCalledOnce();
   });
 
+  it("calls plan with a roots array", async () => {
+    const plan = {
+      planId: "plan-multi",
+      sourceOrgId: "org-1",
+      roots: [
+        { rootType: "parameter", rootId: "P1" },
+        { rootType: "parameter", rootId: "P2" },
+      ],
+      generatedAt: "2026-05-28T10:00:00.000Z",
+      options: {},
+      steps: [],
+    };
+
+    const { client, post } = createMockClient({
+      "POST https://api.example.com/v1/organizations/acme-uat/entity-sync/plan":
+        async (options) => ({
+          statusCode: 200,
+          body: plan,
+          request: { options },
+        }),
+    });
+
+    const result = await client.plan("acme-uat", {
+      roots: [
+        { rootType: "parameter", rootId: "P1" },
+        { rootType: "parameter", rootId: "P2" },
+      ],
+      options: {},
+    });
+
+    expect(result.roots).toHaveLength(2);
+    expect(post).toHaveBeenCalledOnce();
+    const callBody = post.mock.calls[0][1].json;
+    expect(callBody.roots).toHaveLength(2);
+  });
+
   it("throws a readable error for failed preview", async () => {
     const { client } = createMockClient({
       "POST https://api.example.com/v1/organizations/acme-prod/entity-sync/preview":

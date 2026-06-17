@@ -1,6 +1,6 @@
 # Developer guide — Entity Sync Action
 
-This document is for maintainers of the public `synatic-sync/entity-sync-action` repository.
+This document is for maintainers of the public `synatic/entity-sync-action` repository.
 
 ## Architecture
 
@@ -17,16 +17,16 @@ flowchart LR
   api --> retry[lib/retry.js]
 ```
 
-| Module | Responsibility |
-| --- | --- |
-| `src/index.js` | Entry point; dispatches by `command` input |
-| `src/lib/inputs.js` | Input parsing and validation |
-| `src/lib/api-client.js` | Synatic entity-sync REST client |
-| `src/lib/retry.js` | HTTP 429 exponential backoff for `got` |
-| `src/lib/fs.js` | Read/write plan JSON and manifest |
-| `src/lib/github.js` | Auto-commit plan files via GitHub Git API |
-| `src/commands/plan.js` | Plan → write files → optional Git commit/PR |
-| `src/commands/execute.js` | Read plan → preview → execute → run audit |
+| Module                    | Responsibility                              |
+| ------------------------- | ------------------------------------------- |
+| `src/index.js`            | Entry point; dispatches by `command` input  |
+| `src/lib/inputs.js`       | Input parsing and validation                |
+| `src/lib/api-client.js`   | Synatic entity-sync REST client             |
+| `src/lib/retry.js`        | HTTP 429 exponential backoff for `got`      |
+| `src/lib/fs.js`           | Read/write plan JSON and manifest           |
+| `src/lib/github.js`       | Auto-commit plan files via GitHub Git API   |
+| `src/commands/plan.js`    | Plan → write files → optional Git commit/PR |
+| `src/commands/execute.js` | Read plan → preview → execute → run audit   |
 
 ## Local development
 
@@ -60,7 +60,7 @@ runs:
   main: dist/index.js
 ```
 
-When a customer runs `uses: synatic-sync/entity-sync-action@v1`, GitHub checks out the action repo at that tag and executes `dist/index.js`. It does **not** run `npm install` in the action repository.
+When a customer runs `uses: synatic/entity-sync-action@v1`, GitHub checks out the action repo at that tag and executes `dist/index.js`. It does **not** run `npm install` in the action repository.
 
 Dependencies (`@actions/core`, `got`, `octokit`, etc.) must therefore be bundled into `dist/` at build time:
 
@@ -83,7 +83,7 @@ This repository is **public on GitHub** but is **not published to the npm regist
 Customers pin the action with a **Git tag**:
 
 ```yaml
-uses: synatic-sync/entity-sync-action@v1.0.3   # resolves to a git ref
+uses: synatic/entity-sync-action@v1.0.3 # resolves to a git ref
 ```
 
 Use **`npm version`** to bump `package.json`, create the matching git tag, and keep version metadata in sync. That tag is what GitHub Actions consumers reference.
@@ -119,10 +119,10 @@ git push -f origin v1
 
 ### Version pinning
 
-| Pin | Example | Behavior |
-| --- | --- | --- |
-| Exact | `@v1.0.3` | Always runs that tagged commit |
-| Major | `@v1` | Runs the commit pointed to by the `v1` tag (updated in step 6) |
+| Pin   | Example   | Behavior                                                       |
+| ----- | --------- | -------------------------------------------------------------- |
+| Exact | `@v1.0.3` | Always runs that tagged commit                                 |
+| Major | `@v1`     | Runs the commit pointed to by the `v1` tag (updated in step 6) |
 
 ### Breaking changes
 
@@ -138,7 +138,7 @@ Use `npm version major` when making incompatible changes (e.g. Node runtime bump
 4. **Verify consumption** — test in a separate repo:
 
    ```yaml
-   uses: synatic-sync/entity-sync-action@v1.0.1
+   uses: synatic/entity-sync-action@v1.0.1
    ```
 
 5. **Optional: GitHub Marketplace**

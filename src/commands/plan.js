@@ -22,14 +22,21 @@ export async function runPlanCommand(inputs) {
   });
 
   core.info(
-    `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
+    inputs.roots
+      ? `Generating plan for ${inputs.roots.length} roots in org ${inputs.sourceOrgId}`
+      : `Generating plan for ${inputs.rootType} ${inputs.rootId} in org ${inputs.sourceOrgId}`
   );
 
+  /** @type {{ roots?: import('../types.js').EntitySyncRoot[], rootType?: string, rootId?: string, options?: Record<string, unknown> }} */
   const requestBody = {
-    rootType: inputs.rootType,
-    rootId: inputs.rootId,
     options: inputs.planOptions || {},
   };
+  if (inputs.roots) {
+    requestBody.roots = inputs.roots;
+  } else {
+    requestBody.rootType = inputs.rootType;
+    requestBody.rootId = inputs.rootId;
+  }
 
   core.info(
     `POST ${inputs.apiUrl}/v1/organizations/${inputs.sourceOrgId}/entity-sync/plan`
@@ -73,7 +80,9 @@ export async function runPlanCommand(inputs) {
       "",
       `- Plan ID: ${plan.planId}`,
       `- Source org ID: ${inputs.sourceOrgId}`,
-      `- Root: ${inputs.rootType} ${inputs.rootId}`,
+      inputs.roots
+        ? `- Roots: ${inputs.roots.map((r) => `${r.rootType} ${r.rootId}`).join(", ")}`
+        : `- Root: ${inputs.rootType} ${inputs.rootId}`,
       `- Generated: ${plan.generatedAt}`,
     ].join("\n");
 

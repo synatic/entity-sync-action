@@ -1,4 +1,10 @@
 /**
+ * @typedef {Object} EntitySyncRoot
+ * @property {string} rootType
+ * @property {string} rootId
+ */
+
+/**
  * @typedef {Object} ActionInputs
  * @property {'plan' | 'execute'} command
  * @property {string} apiUrl
@@ -7,6 +13,7 @@
  * @property {string} [sourceOrgId]
  * @property {string} [rootType]
  * @property {string} [rootId]
+ * @property {EntitySyncRoot[]} [roots]
  * @property {Record<string, unknown>} [planOptions]
  * @property {boolean} [autoCommit]
  * @property {boolean} [createPr]
@@ -24,8 +31,9 @@
  * @typedef {Object} SyncPlan
  * @property {string} planId
  * @property {string} sourceOrgId
- * @property {string} rootType
- * @property {string} rootId
+ * @property {string} [rootType]
+ * @property {string} [rootId]
+ * @property {EntitySyncRoot[]} [roots]
  * @property {string} generatedAt
  * @property {Record<string, unknown>} options
  * @property {Array<Record<string, unknown>>} steps

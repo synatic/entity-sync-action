@@ -37,10 +37,16 @@ export function writePlanFiles(plan, planPath) {
     planFile: planPath.replace(/\\/g, "/"),
     planId: plan.planId,
     sourceOrgId: plan.sourceOrgId,
-    rootType: plan.rootType,
-    rootId: plan.rootId,
     generatedAt: plan.generatedAt,
   };
+
+  if (plan.roots && plan.roots.length > 0) {
+    manifest.roots = plan.roots;
+  }
+  if (plan.rootType && plan.rootId) {
+    manifest.rootType = plan.rootType;
+    manifest.rootId = plan.rootId;
+  }
 
   fs.mkdirSync(path.dirname(manifestAbsolutePath), { recursive: true });
   fs.writeFileSync(

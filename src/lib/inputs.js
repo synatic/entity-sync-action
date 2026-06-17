@@ -39,6 +39,48 @@ export function getBooleanInput(name, defaultValue = false) {
 }
 
 /**
+ * @param {string} raw
+ * @returns {import('../types.js').EntitySyncRoot[]}
+ */
+export function parseRoots(raw) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Invalid roots JSON: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("roots must be a non-empty JSON array");
+  }
+
+  const seen = new Set();
+  return parsed.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`roots[${index}] must be an object`);
+    }
+    const rootType = typeof entry.rootType === "string" ? entry.rootType.trim() : "";
+    const rootId = typeof entry.rootId === "string" ? entry.rootId.trim() : "";
+    if (!ROOT_TYPES.has(rootType)) {
+      throw new Error(
+        `Invalid rootType '${entry.rootType}' in roots[${index}]. Must be one of: ${[...ROOT_TYPES].join(", ")}`
+      );
+    }
+    if (!rootId) {
+      throw new Error(`roots[${index}].rootId is required`);
+    }
+    const key = `${rootType}:${rootId}`;
+    if (seen.has(key)) {
+      throw new Error(`duplicate root in roots: ${key}`);
+    }
+    seen.add(key);
+    return { rootType, rootId };
+  });
+}
+
+/**
  * @returns {boolean}
  */
 export function isTruthyDefaultTrue(name) {
@@ -74,13 +116,26 @@ export function parseInputs(command) {
 
   if (normalizedCommand === "plan") {
     inputs.sourceOrgId = getInput("source-org-id", { required: true });
-    inputs.rootType = getInput("root-type", { required: true });
-    inputs.rootId = getInput("root-id", { required: true });
+    const rootsRaw = getInput("roots");
+    const rootTypeRaw = getInput("root-type");
+    const rootIdRaw = getInput("root-id");
 
-    if (!ROOT_TYPES.has(inputs.rootType)) {
-      throw new Error(
-        `Invalid root-type '${inputs.rootType}'. Must be one of: ${[...ROOT_TYPES].join(", ")}`
-      );
+    if (rootsRaw) {
+      if (rootTypeRaw || rootIdRaw) {
+        throw new Error(
+          "Provide either 'roots' or 'root-type' + 'root-id', not both"
+        );
+      }
+      inputs.roots = parseRoots(rootsRaw);
+    } else {
+      inputs.rootType = getInput("root-type", { required: true });
+      inputs.rootId = getInput("root-id", { required: true });
+
+      if (!ROOT_TYPES.has(inputs.rootType)) {
+        throw new Error(
+          `Invalid root-type '${inputs.rootType}'. Must be one of: ${[...ROOT_TYPES].join(", ")}`
+        );
+      }
     }
 
     inputs.planOptions = parsePlanOptions(getInput("plan-options") || "{}");

@@ -39,7 +39,7 @@ jobs:
 
       - name: Generate entity sync plan
         id: sync-plan
-        uses: synatic-sync/entity-sync-action@v1
+        uses: synatic/entity-sync-action@v1
         with:
           command: plan
           api-url: ${{ secrets.SYNATIC_API_URL }}
@@ -57,7 +57,7 @@ By default the action commits the plan to a new branch and opens a pull request.
 
 ```yaml
 - name: Generate plan file
-  uses: synatic-sync/entity-sync-action@v1
+  uses: synatic/entity-sync-action@v1
   with:
     command: plan
     api-url: ${{ secrets.SYNATIC_API_URL }}
@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Preview and execute plan
-        uses: synatic-sync/entity-sync-action@v1
+        uses: synatic/entity-sync-action@v1
         with:
           command: execute
           api-url: ${{ secrets.SYNATIC_API_URL }}
@@ -149,12 +149,12 @@ All endpoints live under:
 {api-url}/v1/organizations/{orgId}/entity-sync/...
 ```
 
-| Command           | Endpoint            | Org in URL           |
-| ----------------- | ------------------- | -------------------- |
-| plan              | `POST /plan`        | Source org ID        |
-| execute (preview) | `POST /preview`     | Destination org ID   |
-| execute           | `POST /execute`     | Destination org ID   |
-| audit             | `GET /runs/{runId}` | Destination org ID   |
+| Command           | Endpoint            | Org in URL         |
+| ----------------- | ------------------- | ------------------ |
+| plan              | `POST /plan`        | Source org ID      |
+| execute (preview) | `POST /preview`     | Destination org ID |
+| execute           | `POST /execute`     | Destination org ID |
+| audit             | `GET /runs/{runId}` | Destination org ID |
 
 Authentication:
 

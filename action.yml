@@ -15,9 +15,11 @@ inputs:
   source-org-id:
     description: "Source organization MongoDB ObjectId for plan command (URL segment)"
   root-type:
-    description: "Root entity type for plan command (flow, solution, parameter, etc.)"
+    description: "Root entity type for plan command (flow, solution, parameter, etc.). Use with root-id, or use roots instead."
   root-id:
     description: "Root entity MongoDB ObjectId for plan command"
+  roots:
+    description: "JSON array of { rootType, rootId } objects for plan command. Alternative to root-type + root-id."
   plan-path:
     description: "Path to the plan JSON file in the repository"
     required: false

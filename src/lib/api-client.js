@@ -35,7 +35,7 @@ export class EntitySyncApiClient {
 
   /**
    * @param {string} sourceOrgId
-   * @param {{ rootType: string, rootId: string, options?: Record<string, unknown> }} body
+   * @param {{ roots?: import('../types.js').EntitySyncRoot[], rootType?: string, rootId?: string, options?: Record<string, unknown> }} body
    * @returns {Promise<import('../types.js').SyncPlan>}
    */
   async plan(sourceOrgId, body) {

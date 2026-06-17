@@ -9,7 +9,36 @@ vi.mock("@actions/core", () => ({
 }));
 
 import * as core from "@actions/core";
-import { parseInputs, parsePlanOptions } from "../src/lib/inputs.js";
+import { parseInputs, parsePlanOptions, parseRoots } from "../src/lib/inputs.js";
+
+describe("parseRoots", () => {
+  it("parses a valid roots array", () => {
+    expect(
+      parseRoots(
+        '[{"rootType":"solution","rootId":"67cee4ac1c53a7be24dc77b7"},{"rootType":"serviceView","rootId":"abc"}]'
+      )
+    ).toEqual([
+      { rootType: "solution", rootId: "67cee4ac1c53a7be24dc77b7" },
+      { rootType: "serviceView", rootId: "abc" },
+    ]);
+  });
+
+  it("throws for invalid JSON", () => {
+    expect(() => parseRoots("{invalid")).toThrow(/Invalid roots JSON/);
+  });
+
+  it("throws for empty array", () => {
+    expect(() => parseRoots("[]")).toThrow(/non-empty JSON array/);
+  });
+
+  it("throws for duplicate roots", () => {
+    expect(() =>
+      parseRoots(
+        '[{"rootType":"parameter","rootId":"P1"},{"rootType":"parameter","rootId":"P1"}]'
+      )
+    ).toThrow(/duplicate root/);
+  });
+});
 
 describe("parsePlanOptions", () => {
   it("parses a valid JSON object", () => {
@@ -58,6 +87,44 @@ describe("parseInputs", () => {
     expect(inputs.planOptions).toEqual({ includeReverseDeps: true });
     expect(inputs.autoCommit).toBe(true);
     expect(inputs.createPr).toBe(false);
+  });
+
+  it("parses plan command inputs with roots", () => {
+    vi.mocked(core.getInput).mockImplementation((name) => {
+      const values = {
+        command: "plan",
+        "api-url": "https://api.example.com",
+        "api-key": "syn_api_test",
+        "source-org-id": "60ff27eab96f22106d98f1f2",
+        roots: '[{"rootType":"solution","rootId":"S1"},{"rootType":"serviceView","rootId":"SV1"}]',
+        "plan-path": ".synatic/plans/bundle.json",
+      };
+      return values[name] ?? "";
+    });
+
+    const inputs = parseInputs("plan");
+
+    expect(inputs.roots).toEqual([
+      { rootType: "solution", rootId: "S1" },
+      { rootType: "serviceView", rootId: "SV1" },
+    ]);
+    expect(inputs.rootType).toBeUndefined();
+  });
+
+  it("rejects roots together with root-type", () => {
+    vi.mocked(core.getInput).mockImplementation((name) => {
+      const values = {
+        "api-url": "https://api.example.com",
+        "api-key": "syn_api_test",
+        "source-org-id": "60ff27eab96f22106d98f1f2",
+        roots: '[{"rootType":"flow","rootId":"F1"}]',
+        "root-type": "flow",
+        "root-id": "F1",
+      };
+      return values[name] ?? "";
+    });
+
+    expect(() => parseInputs("plan")).toThrow(/not both/);
   });
 
   it("parses execute command inputs with defaults", () => {

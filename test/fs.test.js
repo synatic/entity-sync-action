@@ -53,6 +53,28 @@ describe("plan file helpers", () => {
     expect(workspace).toBeTruthy();
   });
 
+  it("writes roots into the manifest for multi-root plans", () => {
+    createTempWorkspace();
+    const plan = {
+      planId: "plan-multi",
+      sourceOrgId: "org-1",
+      roots: [
+        { rootType: "solution", rootId: "S1" },
+        { rootType: "serviceView", rootId: "SV1" },
+      ],
+      generatedAt: "2026-05-28T10:00:00.000Z",
+      options: {},
+      steps: [{ order: 1 }],
+    };
+
+    writePlanFiles(plan, ".synatic/plans/bundle.json");
+
+    const manifestPath = resolvePlanPath(".synatic/plans/manifest.json");
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    expect(manifest.roots).toHaveLength(2);
+    expect(manifest.rootType).toBeUndefined();
+  });
+
   it("reads and validates a plan file", () => {
     createTempWorkspace();
     const plan = {
